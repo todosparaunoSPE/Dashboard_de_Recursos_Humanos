@@ -1,0 +1,1211 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Recursos Humanos | HR Analytics</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        :root {
+            --bg-primary: #f8fafc;
+            --bg-secondary: #f1f5f9;
+            --bg-card: #ffffff;
+            --bg-table-row: #f8fafc;
+            --bg-table-hover: #ecfdf5;
+            --accent-teal: #0d9488;
+            --accent-purple: #7c3aed;
+            --accent-pink: #db2777;
+            --accent-orange: #ea580c;
+            --accent-green: #16a34a;
+            --accent-red: #dc2626;
+            --accent-blue: #2563eb;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.07);
+            --shadow-lg: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        .bg-pattern {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(ellipse at 0% 0%, rgba(13, 148, 136, 0.06) 0%, transparent 50%),
+                radial-gradient(ellipse at 100% 100%, rgba(124, 58, 237, 0.06) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .dashboard {
+            position: relative;
+            z-index: 1;
+            max-width: 1500px;
+            margin: 0 auto;
+            padding: 1.5rem;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding: 1.25rem 1.5rem;
+            background: var(--bg-card);
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-md);
+        }
+
+        .header-left h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .header-left h1 span {
+            background: linear-gradient(135deg, var(--accent-teal), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header-left p {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .live-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #fef2f2;
+            padding: 0.5rem 1rem;
+            border-radius: 30px;
+            border: 1px solid #fecaca;
+        }
+
+        .live-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--accent-red);
+            border-radius: 50%;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+        }
+
+        .live-badge span {
+            color: var(--accent-red);
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .db-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #f0fdfa;
+            padding: 0.5rem 1rem;
+            border-radius: 30px;
+            border: 1px solid #99f6e4;
+        }
+
+        .db-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--accent-teal);
+            border-radius: 50%;
+            animation: dbPulse 2s infinite;
+        }
+
+        @keyframes dbPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(13, 148, 136, 0.4); }
+            50% { box-shadow: 0 0 0 6px rgba(13, 148, 136, 0); }
+        }
+
+        .db-badge span {
+            color: var(--accent-teal);
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .time-badge {
+            background: #faf5ff;
+            padding: 0.5rem 1rem;
+            border-radius: 10px;
+            border: 1px solid #e9d5ff;
+        }
+
+        .time-badge span {
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--accent-purple);
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        /* Métricas */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .metric-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 1.25rem;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-sm);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            border-radius: 4px 0 0 4px;
+        }
+
+        .metric-card:nth-child(1)::before { background: var(--accent-teal); }
+        .metric-card:nth-child(2)::before { background: var(--accent-purple); }
+        .metric-card:nth-child(3)::before { background: var(--accent-pink); }
+        .metric-card:nth-child(4)::before { background: var(--accent-orange); }
+
+        .metric-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .metric-card.updating {
+            animation: updatePulse 0.4s ease-out;
+        }
+
+        @keyframes updatePulse {
+            0% { box-shadow: 0 0 0 0 rgba(13, 148, 136, 0.3); }
+            100% { box-shadow: 0 0 0 10px rgba(13, 148, 136, 0); }
+        }
+
+        .metric-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+
+        .metric-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+
+        .metric-icon.teal { background: #ccfbf1; }
+        .metric-icon.purple { background: #ede9fe; }
+        .metric-icon.pink { background: #fce7f3; }
+        .metric-icon.orange { background: #ffedd5; }
+
+        .metric-trend {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.2rem 0.5rem;
+            border-radius: 6px;
+        }
+
+        .metric-trend.up { background: #dcfce7; color: var(--accent-green); }
+        .metric-trend.down { background: #fee2e2; color: var(--accent-red); }
+
+        .metric-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+
+        .metric-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+        }
+
+        .metric-value.flash-up { color: var(--accent-green); }
+        .metric-value.flash-down { color: var(--accent-red); }
+
+        .metric-subtitle {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
+
+        /* Stats secundarios */
+        .secondary-stats {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-mini {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1rem;
+            border: 1px solid var(--border-color);
+            text-align: center;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .stat-mini-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin-bottom: 0.2rem;
+        }
+
+        .stat-mini-label {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        /* Charts */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1.5fr 1fr;
+            gap: 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .chart-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 1.25rem;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .chart-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .chart-live {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.7rem;
+            color: var(--accent-green);
+            background: #dcfce7;
+            padding: 0.25rem 0.6rem;
+            border-radius: 20px;
+            border: 1px solid #bbf7d0;
+        }
+
+        .chart-live .dot {
+            width: 5px;
+            height: 5px;
+            background: var(--accent-green);
+            border-radius: 50%;
+            animation: pulse 1s infinite;
+        }
+
+        .chart-container {
+            height: 240px;
+        }
+
+        .charts-row-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+
+        /* TABLAS */
+        .data-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .table-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 1.25rem;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        .data-table thead {
+            background: var(--bg-table-row);
+        }
+
+        .data-table th {
+            text-align: left;
+            padding: 0.75rem 1rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .data-table td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+
+        .data-table tbody tr {
+            transition: background 0.2s;
+        }
+
+        .data-table tbody tr:hover {
+            background: var(--bg-table-hover);
+        }
+
+        .data-table tbody tr.updated {
+            animation: rowUpdate 0.5s ease-out;
+        }
+
+        @keyframes rowUpdate {
+            0% { background: #ccfbf1; }
+            100% { background: transparent; }
+        }
+
+        .table-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+        }
+
+        .table-badge {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        .table-badge.active { background: #dcfce7; color: var(--accent-green); }
+        .table-badge.vacation { background: #ffedd5; color: var(--accent-orange); }
+        .table-badge.remote { background: #dbeafe; color: var(--accent-blue); }
+        .table-badge.meeting { background: #ede9fe; color: var(--accent-purple); }
+        .table-badge.training { background: #fce7f3; color: var(--accent-pink); }
+
+        .table-progress {
+            width: 100%;
+            height: 6px;
+            background: #e2e8f0;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 0.3rem;
+        }
+
+        .table-progress-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+
+        .table-progress-fill.teal { background: linear-gradient(90deg, #14b8a6, #2dd4bf); }
+        .table-progress-fill.purple { background: linear-gradient(90deg, #8b5cf6, #a78bfa); }
+        .table-progress-fill.green { background: linear-gradient(90deg, #22c55e, #4ade80); }
+
+        .employee-cell {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .employee-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.8rem;
+            color: white;
+        }
+
+        .employee-info h4 {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .employee-info span {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+
+        /* Activity Feed */
+        .activity-feed {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 1.25rem;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 1.5rem;
+        }
+
+        .activity-list {
+            list-style: none;
+            max-height: 280px;
+            overflow-y: auto;
+        }
+
+        .activity-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.75rem;
+            border-radius: 10px;
+            margin-bottom: 0.5rem;
+            background: var(--bg-table-row);
+            border: 1px solid var(--border-color);
+            animation: slideIn 0.4s ease-out;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-15px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .activity-icon {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+        }
+
+        .activity-icon.checkin { background: #dcfce7; }
+        .activity-icon.checkout { background: #fee2e2; }
+        .activity-icon.meeting { background: #ede9fe; }
+        .activity-icon.vacation { background: #ffedd5; }
+        .activity-icon.training { background: #fce7f3; }
+        .activity-icon.hire { background: #ccfbf1; }
+
+        .activity-content { flex: 1; }
+        .activity-content h4 { font-size: 0.85rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.1rem; }
+        .activity-content span { font-size: 0.75rem; color: var(--text-muted); }
+
+        .activity-time {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 1.5rem;
+            background: var(--bg-card);
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+        }
+
+        .footer p { color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 0.3rem; }
+        .footer-links { display: flex; justify-content: center; gap: 2rem; margin-top: 0.75rem; }
+        .footer-links a { color: var(--accent-teal); text-decoration: none; font-weight: 500; font-size: 0.85rem; }
+        .footer-links a:hover { text-decoration: underline; }
+
+        /* Floating Widget */
+        .floating-widget {
+            position: fixed;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            background: var(--bg-card);
+            border-radius: 14px;
+            padding: 0.875rem 1.25rem;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-lg);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            gap: 0.875rem;
+        }
+
+        .floating-widget .icon {
+            width: 44px;
+            height: 44px;
+            background: linear-gradient(135deg, var(--accent-teal), var(--accent-purple));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+        }
+
+        .floating-widget .data h4 {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--accent-teal);
+        }
+
+        .floating-widget .data span {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .metrics-grid { grid-template-columns: repeat(2, 1fr); }
+            .secondary-stats { grid-template-columns: repeat(3, 1fr); }
+            .charts-grid, .charts-row-2, .data-section { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 768px) {
+            .header { flex-direction: column; gap: 1rem; text-align: center; }
+            .header-right { flex-wrap: wrap; justify-content: center; }
+            .metrics-grid { grid-template-columns: 1fr; }
+            .secondary-stats { grid-template-columns: repeat(2, 1fr); }
+            .floating-widget { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-pattern"></div>
+    
+    <div class="dashboard">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <h1>👥 <span>Dashboard de Recursos Humanos</span></h1>
+                <p>People Analytics en tiempo real</p>
+            </div>
+            <div class="header-right">
+                <div class="live-badge">
+                    <div class="live-dot"></div>
+                    <span>EN VIVO</span>
+                </div>
+                <div class="db-badge">
+                    <div class="db-dot"></div>
+                    <span>PostgreSQL Conectado</span>
+                </div>
+                <div class="time-badge">
+                    <span id="currentTime">00:00:00</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Métricas principales -->
+        <div class="metrics-grid">
+            <div class="metric-card" id="card-employees">
+                <div class="metric-header">
+                    <div class="metric-icon teal">👥</div>
+                    <div class="metric-trend up" id="employees-trend">↑ 3.2%</div>
+                </div>
+                <div class="metric-label">Empleados Activos</div>
+                <div class="metric-value" id="employees-value">0</div>
+                <div class="metric-subtitle">+12 este mes</div>
+            </div>
+            <div class="metric-card" id="card-turnover">
+                <div class="metric-header">
+                    <div class="metric-icon purple">📊</div>
+                    <div class="metric-trend down" id="turnover-trend">↓ 1.5%</div>
+                </div>
+                <div class="metric-label">Rotación Anual</div>
+                <div class="metric-value" id="turnover-value">0%</div>
+                <div class="metric-subtitle">Meta: &lt; 10%</div>
+            </div>
+            <div class="metric-card" id="card-vacancies">
+                <div class="metric-header">
+                    <div class="metric-icon pink">💼</div>
+                    <div class="metric-trend up" id="vacancies-trend">↑ 5</div>
+                </div>
+                <div class="metric-label">Vacantes Abiertas</div>
+                <div class="metric-value" id="vacancies-value">0</div>
+                <div class="metric-subtitle">14 en proceso</div>
+            </div>
+            <div class="metric-card" id="card-satisfaction">
+                <div class="metric-header">
+                    <div class="metric-icon orange">⭐</div>
+                    <div class="metric-trend up" id="satisfaction-trend">↑ 4pts</div>
+                </div>
+                <div class="metric-label">eNPS Score</div>
+                <div class="metric-value" id="satisfaction-value">0</div>
+                <div class="metric-subtitle">Excelente (&gt;50)</div>
+            </div>
+        </div>
+
+        <!-- Stats secundarios -->
+        <div class="secondary-stats">
+            <div class="stat-mini">
+                <div class="stat-mini-value" id="stat-attendance" style="color: var(--accent-green);">0%</div>
+                <div class="stat-mini-label">Asistencia Hoy</div>
+            </div>
+            <div class="stat-mini">
+                <div class="stat-mini-value" id="stat-remote" style="color: var(--accent-blue);">0</div>
+                <div class="stat-mini-label">Trabajo Remoto</div>
+            </div>
+            <div class="stat-mini">
+                <div class="stat-mini-value" id="stat-training" style="color: var(--accent-purple);">0</div>
+                <div class="stat-mini-label">En Capacitación</div>
+            </div>
+            <div class="stat-mini">
+                <div class="stat-mini-value" id="stat-vacation" style="color: var(--accent-orange);">0</div>
+                <div class="stat-mini-label">De Vacaciones</div>
+            </div>
+            <div class="stat-mini">
+                <div class="stat-mini-value" id="stat-hiring" style="color: var(--accent-teal);">0</div>
+                <div class="stat-mini-label">Días Contratación</div>
+            </div>
+            <div class="stat-mini">
+                <div class="stat-mini-value" id="stat-payroll" style="color: var(--accent-pink);">0</div>
+                <div class="stat-mini-label">Incidencias Nómina</div>
+            </div>
+        </div>
+
+        <!-- Gráficos principales -->
+        <div class="charts-grid">
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3 class="chart-title">📈 Evolución del Headcount</h3>
+                    <div class="chart-live"><div class="dot"></div> Actualizado</div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="headcountChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3 class="chart-title">🏢 Distribución por Departamento</h3>
+                    <div class="chart-live"><div class="dot"></div> En vivo</div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="departmentChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Segunda fila de gráficos -->
+        <div class="charts-row-2">
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3 class="chart-title">⏱️ Check-ins por Hora</h3>
+                    <div class="chart-live"><div class="dot"></div> Streaming</div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="attendanceChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3 class="chart-title">📅 Antigüedad de Empleados</h3>
+                    <div class="chart-live"><div class="dot"></div> Actualizado</div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="tenureChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- TABLAS DE DATOS -->
+        <div class="data-section">
+            <!-- Tabla de Departamentos -->
+            <div class="table-card">
+                <div class="chart-header">
+                    <h3 class="chart-title">🏢 Métricas por Departamento</h3>
+                    <div class="chart-live"><div class="dot"></div> En vivo</div>
+                </div>
+                <div class="table-wrapper">
+                    <table class="data-table" id="departmentsTable">
+                        <thead>
+                            <tr>
+                                <th>Departamento</th>
+                                <th>Empleados</th>
+                                <th>Asistencia</th>
+                                <th>Satisfacción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="departmentsTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Tabla de Vacantes -->
+            <div class="table-card">
+                <div class="chart-header">
+                    <h3 class="chart-title">💼 Vacantes Activas</h3>
+                    <div class="chart-live"><div class="dot"></div> En vivo</div>
+                </div>
+                <div class="table-wrapper">
+                    <table class="data-table" id="vacanciesTable">
+                        <thead>
+                            <tr>
+                                <th>Posición</th>
+                                <th>Departamento</th>
+                                <th>Candidatos</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody id="vacanciesTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabla de Empleados -->
+        <div class="table-card" style="margin-bottom: 1.5rem;">
+            <div class="chart-header">
+                <h3 class="chart-title">👤 Estado de Empleados en Tiempo Real</h3>
+                <div class="chart-live"><div class="dot"></div> Stream en vivo</div>
+            </div>
+            <div class="table-wrapper">
+                <table class="data-table" id="employeesTable">
+                    <thead>
+                        <tr>
+                            <th>Empleado</th>
+                            <th>Departamento</th>
+                            <th>Estado</th>
+                            <th>Check-in</th>
+                            <th>Productividad</th>
+                        </tr>
+                    </thead>
+                    <tbody id="employeesTableBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Activity Feed -->
+        <div class="activity-feed">
+            <div class="chart-header">
+                <h3 class="chart-title">🔔 Actividad de Empleados</h3>
+                <div class="chart-live"><div class="dot"></div> Stream en vivo</div>
+            </div>
+            <ul class="activity-list" id="activityList"></ul>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p><strong>Dashboard de Recursos Humanos</strong> | People Analytics en tiempo real</p>
+            <p>Conectado a PostgreSQL • Actualización automática cada 2 segundos</p>
+            <div class="footer-links">
+                <a href="#">📧 Contacto: Javier Horacio Pèrez Ricárdez</a>
+                <a href="#">💼 Celular: +52 56 1056 4095</a>
+                <a href="#">🌐 email: jahoperi@gmail.com</a>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Widget flotante -->
+    <div class="floating-widget">
+        <div class="icon">🎯</div>
+        <div class="data">
+            <h4 id="productivityScore">0%</h4>
+            <span>Productividad General</span>
+        </div>
+    </div>
+
+    <script>
+        // Estado Global
+        const state = {
+            employees: 847,
+            turnover: 8.4,
+            vacancies: 23,
+            satisfaction: 72,
+            attendance: 94.2,
+            remote: 156,
+            training: 34,
+            vacation: 28,
+            hiringDays: 21,
+            payrollIssues: 7,
+            productivity: 87,
+            headcountData: [812, 819, 825, 831, 834, 838, 841, 843, 845, 847, 848, 850],
+            departmentData: [180, 145, 120, 98, 87, 72, 65, 80],
+            attendanceData: [],
+            tenureData: [145, 210, 185, 167, 140]
+        };
+
+        for (let i = 0; i < 24; i++) {
+            state.attendanceData.push(Math.floor(Math.random() * 200) + 600);
+        }
+
+        const departments = [
+            { name: 'Tecnología', employees: 180, attendance: 96.2, satisfaction: 78 },
+            { name: 'Ventas', employees: 145, attendance: 94.5, satisfaction: 71 },
+            { name: 'Operaciones', employees: 120, attendance: 93.8, satisfaction: 68 },
+            { name: 'Marketing', employees: 98, attendance: 95.1, satisfaction: 75 },
+            { name: 'Finanzas', employees: 87, attendance: 97.3, satisfaction: 72 },
+            { name: 'RRHH', employees: 72, attendance: 98.1, satisfaction: 82 }
+        ];
+
+        const vacancies = [
+            { position: 'Senior Developer', dept: 'Tecnología', candidates: 45, status: 'active' },
+            { position: 'Product Manager', dept: 'Producto', candidates: 32, status: 'active' },
+            { position: 'Analista Financiero', dept: 'Finanzas', candidates: 28, status: 'meeting' },
+            { position: 'UX Designer', dept: 'Diseño', candidates: 19, status: 'active' },
+            { position: 'Sales Executive', dept: 'Ventas', candidates: 56, status: 'training' }
+        ];
+
+        const employeesData = [
+            { name: 'Ana García', initials: 'AG', dept: 'Tecnología', status: 'active', checkin: '08:15', productivity: 94 },
+            { name: 'Carlos López', initials: 'CL', dept: 'Ventas', status: 'meeting', checkin: '08:30', productivity: 87 },
+            { name: 'María Sánchez', initials: 'MS', dept: 'RRHH', status: 'active', checkin: '08:05', productivity: 92 },
+            { name: 'Roberto Díaz', initials: 'RD', dept: 'Marketing', status: 'remote', checkin: '09:00', productivity: 85 },
+            { name: 'Laura Martínez', initials: 'LM', dept: 'Finanzas', status: 'active', checkin: '08:45', productivity: 91 },
+            { name: 'Pedro Hernández', initials: 'PH', dept: 'Operaciones', status: 'training', checkin: '08:20', productivity: 78 },
+            { name: 'Sofia Ruiz', initials: 'SR', dept: 'Legal', status: 'vacation', checkin: '-', productivity: 0 },
+            { name: 'Diego Torres', initials: 'DT', dept: 'Soporte', status: 'active', checkin: '08:10', productivity: 89 }
+        ];
+
+        const avatarColors = ['#0d9488', '#7c3aed', '#db2777', '#ea580c', '#2563eb', '#16a34a', '#dc2626', '#0891b2'];
+
+        const activityTypes = [
+            { type: 'checkin', icon: '✅', class: 'checkin', messages: ['Check-in registrado', 'Entrada confirmada'] },
+            { type: 'checkout', icon: '👋', class: 'checkout', messages: ['Check-out registrado', 'Salida confirmada'] },
+            { type: 'meeting', icon: '📅', class: 'meeting', messages: ['Entró a reunión', 'Reunión iniciada'] },
+            { type: 'vacation', icon: '🏖️', class: 'vacation', messages: ['Solicitó vacaciones', 'Vacaciones aprobadas'] },
+            { type: 'training', icon: '📚', class: 'training', messages: ['Completó capacitación', 'Inició curso'] },
+            { type: 'hire', icon: '🎉', class: 'hire', messages: ['Nueva contratación', 'Empleado incorporado'] }
+        ];
+
+        // Charts
+        Chart.defaults.color = '#64748b';
+        Chart.defaults.font.family = "'Plus Jakarta Sans', sans-serif";
+
+        const headcountCtx = document.getElementById('headcountChart').getContext('2d');
+        const headcountGradient = headcountCtx.createLinearGradient(0, 0, 0, 240);
+        headcountGradient.addColorStop(0, 'rgba(13, 148, 136, 0.2)');
+        headcountGradient.addColorStop(1, 'rgba(13, 148, 136, 0)');
+
+        const headcountChart = new Chart(headcountCtx, {
+            type: 'line',
+            data: {
+                labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
+                datasets: [{
+                    label: 'Empleados',
+                    data: [...state.headcountData],
+                    borderColor: '#0d9488',
+                    backgroundColor: headcountGradient,
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 4,
+                    pointBackgroundColor: '#0d9488',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { grid: { display: false } },
+                    y: { grid: { color: '#e2e8f0' }, min: 780 }
+                }
+            }
+        });
+
+        const departmentChart = new Chart(document.getElementById('departmentChart'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Tecnología', 'Ventas', 'Operaciones', 'Marketing', 'Finanzas', 'RRHH', 'Legal', 'Soporte'],
+                datasets: [{
+                    data: [...state.departmentData],
+                    backgroundColor: ['#0d9488', '#7c3aed', '#db2777', '#ea580c', '#2563eb', '#16a34a', '#f472b6', '#0891b2'],
+                    borderColor: '#ffffff',
+                    borderWidth: 3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '60%',
+                plugins: { legend: { position: 'right', labels: { boxWidth: 10, padding: 8, font: { size: 10 } } } }
+            }
+        });
+
+        const attendanceCtx = document.getElementById('attendanceChart').getContext('2d');
+        const attendanceGradient = attendanceCtx.createLinearGradient(0, 0, 0, 240);
+        attendanceGradient.addColorStop(0, 'rgba(124, 58, 237, 0.2)');
+        attendanceGradient.addColorStop(1, 'rgba(124, 58, 237, 0)');
+
+        const attendanceChart = new Chart(attendanceCtx, {
+            type: 'line',
+            data: {
+                labels: Array.from({length: 24}, (_, i) => `${i}:00`),
+                datasets: [{
+                    label: 'Check-ins',
+                    data: [...state.attendanceData],
+                    borderColor: '#7c3aed',
+                    backgroundColor: attendanceGradient,
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 0,
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { grid: { display: false }, ticks: { maxTicksLimit: 12 } },
+                    y: { grid: { color: '#e2e8f0' } }
+                }
+            }
+        });
+
+        const tenureChart = new Chart(document.getElementById('tenureChart'), {
+            type: 'bar',
+            data: {
+                labels: ['< 1 año', '1-2 años', '2-3 años', '3-5 años', '> 5 años'],
+                datasets: [{
+                    label: 'Empleados',
+                    data: [...state.tenureData],
+                    backgroundColor: ['#0d9488', '#7c3aed', '#db2777', '#ea580c', '#2563eb'],
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { grid: { display: false } },
+                    y: { grid: { color: '#e2e8f0' } }
+                }
+            }
+        });
+
+        // Funciones
+        function randomVariation(value, percent) {
+            const variation = value * (percent / 100);
+            return value + (Math.random() * variation * 2 - variation);
+        }
+
+        function updateDepartmentsTable() {
+            const tbody = document.getElementById('departmentsTableBody');
+            tbody.innerHTML = '';
+            departments.forEach(d => {
+                d.employees = Math.floor(randomVariation(d.employees, 1));
+                d.attendance = Math.max(85, Math.min(100, randomVariation(d.attendance, 1)));
+                d.satisfaction = Math.floor(Math.max(50, Math.min(95, randomVariation(d.satisfaction, 2))));
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><strong>${d.name}</strong></td>
+                    <td class="table-value">${d.employees}</td>
+                    <td class="table-value" style="color: ${d.attendance >= 95 ? 'var(--accent-green)' : 'var(--accent-orange)'}">${d.attendance.toFixed(1)}%</td>
+                    <td>
+                        <span class="table-value">${d.satisfaction}</span>
+                        <div class="table-progress"><div class="table-progress-fill teal" style="width: ${d.satisfaction}%"></div></div>
+                    </td>
+                `;
+                if (Math.random() > 0.8) row.classList.add('updated');
+                tbody.appendChild(row);
+            });
+        }
+
+        function updateVacanciesTable() {
+            const tbody = document.getElementById('vacanciesTableBody');
+            tbody.innerHTML = '';
+            const statusLabels = { active: 'En proceso', meeting: 'Entrevistas', training: 'Evaluación' };
+            vacancies.forEach(v => {
+                v.candidates = Math.floor(randomVariation(v.candidates, 5));
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><strong>${v.position}</strong></td>
+                    <td>${v.dept}</td>
+                    <td class="table-value">${v.candidates}</td>
+                    <td><span class="table-badge ${v.status}">${statusLabels[v.status]}</span></td>
+                `;
+                if (Math.random() > 0.85) row.classList.add('updated');
+                tbody.appendChild(row);
+            });
+        }
+
+        function updateEmployeesTable() {
+            const tbody = document.getElementById('employeesTableBody');
+            tbody.innerHTML = '';
+            const statusLabels = { active: 'Activo', meeting: 'En reunión', remote: 'Remoto', training: 'Capacitación', vacation: 'Vacaciones' };
+            employeesData.forEach((e, i) => {
+                if (e.status !== 'vacation') e.productivity = Math.floor(Math.max(70, Math.min(100, randomVariation(e.productivity, 3))));
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>
+                        <div class="employee-cell">
+                            <div class="employee-avatar" style="background: ${avatarColors[i % avatarColors.length]}">${e.initials}</div>
+                            <div class="employee-info">
+                                <h4>${e.name}</h4>
+                                <span>ID: EMP-${1000 + i}</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td>${e.dept}</td>
+                    <td><span class="table-badge ${e.status}">${statusLabels[e.status]}</span></td>
+                    <td class="table-value">${e.checkin}</td>
+                    <td>
+                        ${e.status !== 'vacation' ? `
+                            <span class="table-value" style="color: ${e.productivity >= 85 ? 'var(--accent-green)' : 'var(--accent-orange)'}">${e.productivity}%</span>
+                            <div class="table-progress"><div class="table-progress-fill ${e.productivity >= 85 ? 'green' : 'purple'}" style="width: ${e.productivity}%"></div></div>
+                        ` : '<span style="color: var(--text-muted)">-</span>'}
+                    </td>
+                `;
+                if (Math.random() > 0.85) row.classList.add('updated');
+                tbody.appendChild(row);
+            });
+        }
+
+        function updateAllMetrics() {
+            const oldEmployees = state.employees;
+            if (Math.random() > 0.85) state.employees += Math.floor(Math.random() * 2);
+            document.getElementById('employees-value').textContent = state.employees.toLocaleString();
+
+            state.turnover = Math.max(5, Math.min(15, randomVariation(state.turnover, 3)));
+            document.getElementById('turnover-value').textContent = state.turnover.toFixed(1) + '%';
+
+            state.vacancies = Math.max(10, Math.floor(randomVariation(state.vacancies, 8)));
+            document.getElementById('vacancies-value').textContent = state.vacancies;
+
+            state.satisfaction = Math.floor(Math.max(50, Math.min(90, randomVariation(state.satisfaction, 2))));
+            document.getElementById('satisfaction-value').textContent = state.satisfaction;
+
+            state.attendance = Math.max(85, Math.min(99, randomVariation(state.attendance, 1)));
+            state.remote = Math.floor(randomVariation(state.remote, 5));
+            state.training = Math.floor(randomVariation(state.training, 10));
+            state.vacation = Math.floor(randomVariation(state.vacation, 8));
+            state.hiringDays = Math.floor(randomVariation(state.hiringDays, 5));
+            state.payrollIssues = Math.max(0, Math.floor(randomVariation(state.payrollIssues, 20)));
+            state.productivity = Math.max(70, Math.min(98, randomVariation(state.productivity, 2)));
+
+            document.getElementById('stat-attendance').textContent = state.attendance.toFixed(1) + '%';
+            document.getElementById('stat-remote').textContent = state.remote;
+            document.getElementById('stat-training').textContent = state.training;
+            document.getElementById('stat-vacation').textContent = state.vacation;
+            document.getElementById('stat-hiring').textContent = state.hiringDays;
+            document.getElementById('stat-payroll').textContent = state.payrollIssues;
+            document.getElementById('productivityScore').textContent = state.productivity.toFixed(1) + '%';
+            document.getElementById('currentTime').textContent = new Date().toLocaleTimeString('es-MX');
+        }
+
+        function updateCharts() {
+            state.attendanceData.push(Math.floor(randomVariation(750, 15)));
+            state.attendanceData.shift();
+            attendanceChart.data.datasets[0].data = [...state.attendanceData];
+            attendanceChart.update('none');
+
+            if (Math.random() > 0.7) {
+                state.departmentData = state.departmentData.map(v => Math.floor(randomVariation(v, 2)));
+                departmentChart.data.datasets[0].data = [...state.departmentData];
+                departmentChart.update();
+            }
+
+            if (Math.random() > 0.85) {
+                state.headcountData = state.headcountData.map(v => Math.floor(randomVariation(v, 0.5)));
+                headcountChart.data.datasets[0].data = [...state.headcountData];
+                headcountChart.update();
+            }
+        }
+
+        function addActivity() {
+            const activity = activityTypes[Math.floor(Math.random() * activityTypes.length)];
+            const employee = employeesData[Math.floor(Math.random() * employeesData.length)];
+            const message = activity.messages[Math.floor(Math.random() * activity.messages.length)];
+            
+            const list = document.getElementById('activityList');
+            const item = document.createElement('li');
+            item.className = 'activity-item';
+            item.innerHTML = `
+                <div class="activity-icon ${activity.class}">${activity.icon}</div>
+                <div class="activity-content">
+                    <h4>${message}</h4>
+                    <span>${employee.name} • ${employee.dept}</span>
+                </div>
+                <div class="activity-time">${new Date().toLocaleTimeString('es-MX')}</div>
+            `;
+            list.insertBefore(item, list.firstChild);
+            while (list.children.length > 6) list.removeChild(list.lastChild);
+        }
+
+        // Inicialización
+        window.addEventListener('load', () => {
+            updateAllMetrics();
+            updateDepartmentsTable();
+            updateVacanciesTable();
+            updateEmployeesTable();
+            for (let i = 0; i < 4; i++) addActivity();
+
+            setInterval(updateAllMetrics, 2000);
+            setInterval(updateCharts, 2000);
+            setInterval(updateDepartmentsTable, 4000);
+            setInterval(updateVacanciesTable, 5000);
+            setInterval(updateEmployeesTable, 3000);
+            setInterval(addActivity, 3500);
+        });
+    </script>
+</body>
+</html>
